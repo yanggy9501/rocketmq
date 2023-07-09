@@ -37,18 +37,20 @@ public class KVConfigManager {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.NAMESRV_LOGGER_NAME);
 
     /**
-     * 持有其外部组件
+     * 持有其外部组件，NamesrvController 聚合 KVConfigManager
      */
     private final NamesrvController namesrvController;
 
+    /**
+     * kv 内存或文件读写需要持有锁保证数据一致
+     */
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     /**
      * 基于 HashMap 的数据结构进行 kv 配置存放
      * Map<Namespace, HashMap<Key, Value >>
      */
-    private final HashMap<String/* Namespace */, HashMap<String/* Key */, String/* Value */>> configTable =
-        new HashMap<String, HashMap<String, String>>();
+    private final HashMap<String/* Namespace */, HashMap<String/* Key */, String/* Value */>> configTable = new HashMap<>();
 
     public KVConfigManager(NamesrvController namesrvController) {
         this.namesrvController = namesrvController;

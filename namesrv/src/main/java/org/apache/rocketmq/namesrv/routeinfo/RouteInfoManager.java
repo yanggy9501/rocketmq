@@ -41,7 +41,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * 路由表管理组件，如 broker 的组件，topic 的 broker 信息等等
+ * 路由表管理组件，如 broker，topic 信息等等
  */
 public class RouteInfoManager {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.NAMESRV_LOGGER_NAME);
@@ -54,12 +54,13 @@ public class RouteInfoManager {
     /** 几个关键的Table */
     /**
      * topic:queue 的映射信息
-     * topic 是逻辑的概念，一个 topic 有多个分区即 queue，queue是物理概念在真是 broker 上
+     * topic 是逻辑的概念，一个 topic 有多个分区即 queue，queue是物理概念在实践 broker 机器上
+     * broker 上
      */
     private final HashMap<String/* topic */, List<QueueData>> topicQueueTable;
 
     /**
-     * 一个 broker name 对应一个 broker data
+     * 一个 broker name 对应一个 broker data，broker 与 broker 组的映射
      */
     private final HashMap<String/* brokerName */, BrokerData> brokerAddrTable;
 
@@ -150,9 +151,9 @@ public class RouteInfoManager {
         RegisterBrokerResult result = new RegisterBrokerResult();
         try {
             try {
-                //加锁，同一时间只能一个人写
+                // 加锁，同一时间只能一个人写
                 this.lock.writeLock().lockInterruptibly();
-
+                // 拿到一个 cluster 集群对应的 broker 组，把这broker 组加入到 cluster 里去
                 Set<String> brokerNames = this.clusterAddrTable.get(clusterName);
                 if (null == brokerNames) {
                     brokerNames = new HashSet<String>();
@@ -161,7 +162,7 @@ public class RouteInfoManager {
                 brokerNames.add(brokerName);
 
                 boolean registerFirst = false;
-                //brokerAddrTable:核心路由信息表
+                // brokerAddrTable: 核心路由信息表
                 BrokerData brokerData = this.brokerAddrTable.get(brokerName);
                 if (null == brokerData) {
                     registerFirst = true;
@@ -171,6 +172,7 @@ public class RouteInfoManager {
                 Map<Long, String> brokerAddrsMap = brokerData.getBrokerAddrs();
                 //Switch slave to master: first remove <1, IP:PORT> in namesrv, then add <0, IP:PORT>
                 //The same IP:PORT must only have one record in brokerAddrTable
+                // 处理异常数据：如果注册过来的 broker 机器跟之前的机器地址一样，但是 brokerId 不同，则同一台机器，你启动类不同的 broker 节点
                 Iterator<Entry<Long, String>> it = brokerAddrsMap.entrySet().iterator();
                 while (it.hasNext()) {
                     Entry<Long, String> item = it.next();
@@ -195,7 +197,7 @@ public class RouteInfoManager {
                         }
                     }
                 }
-                //主要封装与客户端的channel
+                // 主要封装与客户端的channel
                 BrokerLiveInfo prevBrokerLiveInfo = this.brokerLiveTable.put(brokerAddr,
                     new BrokerLiveInfo(
                         System.currentTimeMillis(),
@@ -213,7 +215,7 @@ public class RouteInfoManager {
                         this.filterServerTable.put(brokerAddr, filterServerList);
                     }
                 }
-
+                // 如果注册过来的机器是一组 broker 里的 slave
                 if (MixAll.MASTER_ID != brokerId) {
                     String masterAddr = brokerData.getBrokerAddrs().get(MixAll.MASTER_ID);
                     if (masterAddr != null) {
@@ -328,6 +330,14 @@ public class RouteInfoManager {
         return wipeTopicCnt;
     }
 
+    /**
+     * 下线，broker + 集群 + 组 + 集群
+     *
+     * @param clusterName
+     * @param brokerAddr
+     * @param brokerName
+     * @param brokerId
+     */
     public void unregisterBroker(
         final String clusterName,
         final String brokerAddr,
@@ -411,6 +421,12 @@ public class RouteInfoManager {
         }
     }
 
+    /**
+     * 获取一个 topic 的路由信息
+     *
+     * @param topic
+     * @return
+     */
     public TopicRouteData pickupTopicRouteData(final String topic) {
         TopicRouteData topicRouteData = new TopicRouteData();
         boolean foundQueueData = false;
@@ -439,8 +455,8 @@ public class RouteInfoManager {
                     for (String brokerName : brokerNameSet) {
                         BrokerData brokerData = this.brokerAddrTable.get(brokerName);
                         if (null != brokerData) {
-                            BrokerData brokerDataClone = new BrokerData(brokerData.getCluster(), brokerData.getBrokerName(), (HashMap<Long, String>) brokerData
-                                .getBrokerAddrs().clone());
+                            BrokerData brokerDataClone = new BrokerData(brokerData.getCluster(), brokerData.getBrokerName(),
+                                (HashMap<Long, String>) brokerData.getBrokerAddrs().clone());
                             brokerDataList.add(brokerDataClone);
                             foundBrokerData = true;
                             for (final String brokerAddr : brokerDataClone.getBrokerAddrs().values()) {
@@ -466,6 +482,9 @@ public class RouteInfoManager {
         return null;
     }
 
+    /**
+     * 定时保活，如果超时则关闭与 broker 连接
+     */
     public void scanNotActiveBroker() {
         Iterator<Entry<String, BrokerLiveInfo>> it = this.brokerLiveTable.entrySet().iterator();
         while (it.hasNext()) {

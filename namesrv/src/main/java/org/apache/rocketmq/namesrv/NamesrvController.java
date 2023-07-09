@@ -58,8 +58,8 @@ public class NamesrvController {
     /**
      * 单线程定时调度线程池
      */
-    private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryImpl(
-        "NSScheduledThread"));
+    private final ScheduledExecutorService scheduledExecutorService =
+        Executors.newSingleThreadScheduledExecutor(new ThreadFactoryImpl("NSScheduledThread"));
 
     /**
      * KV 组件
@@ -71,13 +71,24 @@ public class NamesrvController {
      */
     private final RouteInfoManager routeInfoManager;
 
+    /**
+     * 远程网络通信服务器，跟broker，producer，consumer 来进行通信
+     */
     private RemotingServer remotingServer;
 
+    /**
+     * Housekeeping 酒店旅游业的术语，类似酒店房间管理（预定）
+     * namesrv 与 broker 之间网络事件的监听器
+     */
     private BrokerHousekeepingService brokerHousekeepingService;
 
     private ExecutorService remotingExecutor;
 
+    /**
+     * 通用配置
+     */
     private Configuration configuration;
+
     private FileWatchService fileWatchService;
 
     public NamesrvController(NamesrvConfig namesrvConfig, NettyServerConfig nettyServerConfig) {
@@ -92,7 +103,12 @@ public class NamesrvController {
         );
         this.configuration.setStorePathFromConfig(this.namesrvConfig, "configStorePath");
     }
-    //K1 NameServerController初始化
+
+    /**
+     * K1 NameServerController初始化
+     *
+     * @return
+     */
     public boolean initialize() {
         //加载KV配置
         this.kvConfigManager.load();

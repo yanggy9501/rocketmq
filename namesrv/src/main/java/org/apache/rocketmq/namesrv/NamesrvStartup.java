@@ -45,6 +45,8 @@ import java.util.concurrent.Callable;
 /**
  * NameServer 启动类
  * PS: 需要配置系统环境变量 ROCKETMQ_HOME=ROCKETMQ的主目录（随意:配置环境变量(值为RocketMQ的安装路径)）
+ * 在启动参数配置环境变化，或者在系统中配置环境变量，如
+ * ROCKETMQ_HOME=\rocketmq-all-4.9.1\rocketmq-all-4.9.1-source-release
  */
 public class NamesrvStartup {
 
@@ -77,7 +79,7 @@ public class NamesrvStartup {
     public static NamesrvController createNamesrvController(String[] args) throws IOException, JoranException {
         // 设置系统环境变量-当前框架版本
         System.setProperty(RemotingCommand.REMOTING_VERSION_KEY, Integer.toString(MQVersion.CURRENT_VERSION));
-        // PackageConflictDetect.detectFastjson();
+        // PackageConflictDetect#detectFastjson
         // 检测命令行参数
         Options options = ServerUtil.buildCommandlineOptions(new Options());
         commandLine = ServerUtil.parseCmdLine("mqnamesrv", args, buildCommandlineOptions(options), new PosixParser());
@@ -89,9 +91,9 @@ public class NamesrvStartup {
         final NamesrvConfig namesrvConfig = new NamesrvConfig();
         // Netty 网络通信配置
         final NettyServerConfig nettyServerConfig = new NettyServerConfig();
-        // Netty默认 9876 端口
+        // Netty 默认端口 9876
         nettyServerConfig.setListenPort(9876);
-        // -c 和 -p 参数解析，-c 通过启动命令指定配置以自定化配置NamesrvConfig、NettyServerConfig
+        // -c 和 -p 参数解析，-c config 通过启动命令指定配置以定制化的额外配置NamesrvConfig、NettyServerConfig
         if (commandLine.hasOption('c')) {
             String file = commandLine.getOptionValue('c');
             if (file != null) {
@@ -107,7 +109,7 @@ public class NamesrvStartup {
                 in.close();
             }
         }
-        // -p 参数打印配置日志
+        // -p print 参数打印配置日志，打印由 logback_namesrv.xml 配置
         if (commandLine.hasOption('p')) {
             InternalLogger console = InternalLoggerFactory.getLogger(LoggerName.NAMESRV_CONSOLE_NAME);
             MixAll.printObjectProperties(console, namesrvConfig);
@@ -146,7 +148,7 @@ public class NamesrvStartup {
         if (null == controller) {
             throw new IllegalArgumentException("NamesrvController is null");
         }
-        //初始化，主要是几个定时任务
+        // 初始化，主要是几个定时任务
         boolean initResult = controller.initialize();
         if (!initResult) {
             controller.shutdown();

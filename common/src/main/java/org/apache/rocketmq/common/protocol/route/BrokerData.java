@@ -25,15 +25,13 @@ import java.util.List;
 import java.util.Random;
 
 /**
- *
+ * Broker
  */
 public class BrokerData implements Comparable<BrokerData> {
     /**
      * 一个 broker 集群拓扑架构，一个 broker 集群对应多个 broker 组，多个 broker机器（主从复制，同步，高可用）
      * 这一组 broker 属于哪个集群的
      */
-
-
     private String cluster;
 
     /**

@@ -24,6 +24,7 @@ public class NettyServerConfig implements Cloneable {
     private int serverWorkerThreads = 8;
     private int serverCallbackExecutorThreads = 0;
     private int serverSelectorThreads = 3;
+
     /**
      * 单向通信的信号量
      */

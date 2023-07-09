@@ -28,11 +28,18 @@ import java.util.Properties;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+/**
+ * namesrv 通用配置
+ */
 public class Configuration {
 
     private final InternalLogger log;
 
     private List<Object> configObjectList = new ArrayList<Object>(4);
+
+    /**
+     * 存储路径
+     */
     private String storePath;
     private boolean storePathFromConfig = false;
     private Object storePathObject;

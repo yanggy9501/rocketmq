@@ -25,7 +25,7 @@ package org.apache.rocketmq.common.protocol.route;
  */
 public class QueueData implements Comparable<QueueData> {
     /**
-     * 每个 queue 都属于一个数据分区，一定是在一个 broker 里
+     * 每个 queue 都归属于一个 topic，存在于一个实际的 broker 物理机器上
      */
     private String brokerName;
 
