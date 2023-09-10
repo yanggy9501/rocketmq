@@ -483,7 +483,9 @@ public class RouteInfoManager {
     }
 
     /**
-     * 定时保活，如果超时则关闭与 broker 连接
+     * 路由剔除：剔除失效的 broker，将 broker相关的信息从 brokerLiveTable 中移除掉，同时销毁掉netty对应的channel。
+     *          brokerLiveTable 是一个hashmap，归 RouteInfoManager类持有。
+     * 定时保活：如果超时则关闭与 broker 连接
      */
     public void scanNotActiveBroker() {
         Iterator<Entry<String, BrokerLiveInfo>> it = this.brokerLiveTable.entrySet().iterator();

@@ -80,6 +80,10 @@ public class RemotingCommand {
      * code编号：请求编号
      */
     private int code;
+
+    /**
+     * 编程语言
+     */
     private LanguageCode language = LanguageCode.JAVA;
     private int version = 0;
 
@@ -161,11 +165,23 @@ public class RemotingCommand {
         return createResponseCommand(code, remark, null);
     }
 
+    /**
+     * 解码
+     *
+     * @param array
+     * @return
+     */
     public static RemotingCommand decode(final byte[] array) {
         ByteBuffer byteBuffer = ByteBuffer.wrap(array);
         return decode(byteBuffer);
     }
 
+    /**
+     * 解码
+     *
+     * @param byteBuffer
+     * @return
+     */
     public static RemotingCommand decode(final ByteBuffer byteBuffer) {
         int length = byteBuffer.limit();
         int oriHeaderLen = byteBuffer.getInt();
@@ -350,6 +366,11 @@ public class RemotingCommand {
         return name;
     }
 
+    /**
+     * 编码
+     *
+     * @return
+     */
     public ByteBuffer encode() {
         // 1> header length size
         int length = 4;
@@ -384,7 +405,13 @@ public class RemotingCommand {
         return result;
     }
 
+    /**
+     * 消息头编码
+     *
+     * @return
+     */
     private byte[] headerEncode() {
+        // 把自定义的 header 放到 ext fields map 里去
         this.makeCustomHeaderToNet();
         if (SerializeType.ROCKETMQ == serializeTypeCurrentRPC) {
             return RocketMQSerializable.rocketMQProtocolEncode(this);
@@ -393,13 +420,16 @@ public class RemotingCommand {
         }
     }
 
+    /**
+     * 处理自定义头
+     */
     public void makeCustomHeaderToNet() {
         if (this.customHeader != null) {
             Field[] fields = getClazzFields(customHeader.getClass());
             if (null == this.extFields) {
                 this.extFields = new HashMap<String, String>();
             }
-
+            // 对自定义的 header 类的 fields 进行遍历
             for (Field field : fields) {
                 if (!Modifier.isStatic(field.getModifiers())) {
                     String name = field.getName();
@@ -411,7 +441,7 @@ public class RemotingCommand {
                         } catch (Exception e) {
                             log.error("Failed to access field [{}]", name, e);
                         }
-
+                        // 对自定义的 header 的 fields 放到扩展字段里面去 extFields
                         if (value != null) {
                             this.extFields.put(name, value.toString());
                         }

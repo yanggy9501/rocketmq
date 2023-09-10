@@ -23,6 +23,7 @@ public abstract class RemotingSerializable {
     private final static Charset CHARSET_UTF8 = Charset.forName("UTF-8");
 
     public static byte[] encode(final Object obj) {
+        // json 序列化
         final String json = toJson(obj, false);
         if (json != null) {
             return json.getBytes(CHARSET_UTF8);

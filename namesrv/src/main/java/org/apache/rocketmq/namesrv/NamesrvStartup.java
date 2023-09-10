@@ -44,6 +44,10 @@ import java.util.concurrent.Callable;
 
 /**
  * NameServer 启动类
+ * NameServer 担当着路由注册、发现、动态地维护broker相关信息的角色, NameServer 不提供Master-slave同步机制，但是能够保证数据的最终一致性。
+ * 1. 动态路由发现和注册功能，broker 启动时，会将brokerAddr 注册到NameServer里；路由发现是指客户端会定时的向NameServer根据topic拉取路由的最新信息
+ * 2. 动态剔除功能，每隔10 s NameServer 会自动扫描所有的broker, 如果有broker失效，那么会从地址列表里将其剔除掉。
+ *
  * PS: 需要配置系统环境变量 ROCKETMQ_HOME=ROCKETMQ的主目录（随意:配置环境变量(值为RocketMQ的安装路径)）
  * 在启动参数配置环境变化，或者在系统中配置环境变量，如
  * ROCKETMQ_HOME=\rocketmq-all-4.9.1\rocketmq-all-4.9.1-source-release
@@ -59,8 +63,9 @@ public class NamesrvStartup {
     }
 
     public static NamesrvController main0(String[] args) {
-        // K1 NameServer的核心组件，类似于Web应用中的Controller，负责接收处理网络请求。
+        //1. NamesrvController 为 NameServer的核心组件，类似于Web应用中的Controller，负责接收处理网络请求。
         try {
+            // 创建 NameSrvController，NameSrv的配置存放在 user.home\namesrv\ 目录下
             NamesrvController controller = createNamesrvController(args);
             // 启动 Namesrv
             start(controller);
@@ -76,6 +81,7 @@ public class NamesrvStartup {
         return null;
     }
 
+    /*xxx:创建NameSrvController, 加载 namesrvConfig 和 nettyServerConfig*/
     public static NamesrvController createNamesrvController(String[] args) throws IOException, JoranException {
         // 设置系统环境变量-当前框架版本
         System.setProperty(RemotingCommand.REMOTING_VERSION_KEY, Integer.toString(MQVersion.CURRENT_VERSION));
@@ -148,7 +154,7 @@ public class NamesrvStartup {
         if (null == controller) {
             throw new IllegalArgumentException("NamesrvController is null");
         }
-        // 初始化，主要是几个定时任务
+        // start 之间需要做一些准备工作：比如加载配置、创建Netty Server实例、注册请求处理器、扫描所有的失联的broker等
         boolean initResult = controller.initialize();
         if (!initResult) {
             controller.shutdown();
@@ -162,7 +168,7 @@ public class NamesrvStartup {
                 return null;
             }
         }));
-        // 启动服务
+        // 启动服务，启动 netty
         controller.start();
 
         return controller;

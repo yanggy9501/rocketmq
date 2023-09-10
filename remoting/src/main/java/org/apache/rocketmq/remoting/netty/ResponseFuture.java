@@ -17,15 +17,26 @@
 package org.apache.rocketmq.remoting.netty;
 
 import io.netty.channel.Channel;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.rocketmq.remoting.InvokeCallback;
 import org.apache.rocketmq.remoting.common.SemaphoreReleaseOnlyOnce;
 import org.apache.rocketmq.remoting.protocol.RemotingCommand;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+/**
+ * 请求的响应封装
+ */
 public class ResponseFuture {
+    /**
+     * 请求 id
+     */
     private final int opaque;
+
+    /**
+     * 请求对应的 netty channel
+     */
     private final Channel processChannel;
     private final long timeoutMillis;
     private final InvokeCallback invokeCallback;

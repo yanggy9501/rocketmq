@@ -72,7 +72,7 @@ public class NamesrvController {
     private final RouteInfoManager routeInfoManager;
 
     /**
-     * 远程网络通信服务器，跟broker，producer，consumer 来进行通信
+     * 远程网络通信服务器，跟 broker，producer，consumer 来进行通信
      */
     private RemotingServer remotingServer;
 
@@ -89,6 +89,9 @@ public class NamesrvController {
      */
     private Configuration configuration;
 
+    /**
+     * 文件监听服务
+     */
     private FileWatchService fileWatchService;
 
     public NamesrvController(NamesrvConfig namesrvConfig, NettyServerConfig nettyServerConfig) {
@@ -104,22 +107,18 @@ public class NamesrvController {
         this.configuration.setStorePathFromConfig(this.namesrvConfig, "configStorePath");
     }
 
-    /**
-     * K1 NameServerController初始化
-     *
-     * @return
-     */
+    /*xxx: NameServerController初始化 */
     public boolean initialize() {
-        //加载KV配置
+        // 加载 KV 配置，磁盘文件加载
         this.kvConfigManager.load();
-        //创建NettyServer网络处理对象
+        // 创建 NettyServer 网络处理对象
         this.remotingServer = new NettyRemotingServer(this.nettyServerConfig, this.brokerHousekeepingService);
-        //Netty服务器的工作线程池
+        // 初始化 Netty 服务器的工作线程池
         this.remotingExecutor =
             Executors.newFixedThreadPool(nettyServerConfig.getServerWorkerThreads(), new ThreadFactoryImpl("RemotingExecutorThread_"));
-        //K1 注册NameServer的Processor 注册到RemotingServer中。
+        // 注册 NameServer 的 Processor 注册到 RemotingServer 中（如：处理心跳的）。
         this.registerProcessor();
-        //定时任务：每间隔10S扫描一次Broerk，移除不活跃的Broker
+        // 路由剔除：定时任务：每间隔10S扫描一次Broker，移除不活跃的Broker
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
@@ -127,7 +126,7 @@ public class NamesrvController {
                 NamesrvController.this.routeInfoManager.scanNotActiveBroker();
             }
         }, 5, 10, TimeUnit.SECONDS);
-        //定时任务：每间隔10min打印一次KVa配置
+        // 定时任务：每间隔10min打印一次KV配置
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
@@ -179,19 +178,18 @@ public class NamesrvController {
 
     private void registerProcessor() {
         if (namesrvConfig.isClusterTest()) {
-            //测试集群
             this.remotingServer.registerDefaultProcessor(new ClusterTestRequestProcessor(this, namesrvConfig.getProductEnvName()),
                 this.remotingExecutor);
         } else {
-
             this.remotingServer.registerDefaultProcessor(new DefaultRequestProcessor(this), this.remotingExecutor);
         }
     }
 
     public void start() throws Exception {
-        //启动remotingServer。
+        // 1.启动 remotingServer（netty server）。
+        /** @see NettyRemotingServer#start() */
         this.remotingServer.start();
-
+        // 2. 启动文件扫描线程，监听核心配置是否修改。
         if (this.fileWatchService != null) {
             this.fileWatchService.start();
         }

@@ -22,21 +22,6 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
-import java.net.SocketAddress;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
-
 import org.apache.rocketmq.logging.InternalLogger;
 import org.apache.rocketmq.logging.InternalLoggerFactory;
 import org.apache.rocketmq.remoting.ChannelEventListener;
@@ -51,6 +36,11 @@ import org.apache.rocketmq.remoting.exception.RemotingTimeoutException;
 import org.apache.rocketmq.remoting.exception.RemotingTooMuchRequestException;
 import org.apache.rocketmq.remoting.protocol.RemotingCommand;
 import org.apache.rocketmq.remoting.protocol.RemotingSysResponseCode;
+
+import java.net.SocketAddress;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.*;
 
 public abstract class NettyRemotingAbstract {
 
@@ -70,7 +60,7 @@ public abstract class NettyRemotingAbstract {
     protected final Semaphore semaphoreAsync;
 
     /**
-     * This map caches all on-going requests.
+     * This map caches all on-going requests. opaque 理解为请求 id
      */
     protected final ConcurrentMap<Integer /* opaque */, ResponseFuture> responseTable =
         new ConcurrentHashMap<Integer, ResponseFuture>(256);
@@ -98,7 +88,7 @@ public abstract class NettyRemotingAbstract {
     protected volatile SslContext sslContext;
 
     /**
-     * custom rpc hooks
+     * custom rpc hooks 自定义的回调函数
      */
     protected List<RPCHook> rpcHooks = new ArrayList<RPCHook>();
 
@@ -145,6 +135,10 @@ public abstract class NettyRemotingAbstract {
      * <li>A response to a previous request issued by this very participant.</li>
      * </ul>
      * </p>
+     *
+     * 如果说 broker 主动对 namesrv 发起或响应一个 rpc 调用请求，rpc调用和响应都是 RemotingCommand
+     * netty server 会反序列化rpc 调用请求，从字节数组封装称 RemotingCommand， 就会把这个 rpc 请求交给这个方法
+     * 来处理这个请求，
      *
      * @param ctx Channel handler context.
      * @param msg incoming remoting command.
@@ -195,14 +189,18 @@ public abstract class NettyRemotingAbstract {
         final int opaque = cmd.getOpaque();
 
         if (pair != null) {
+            // 请求的处理的任务
             Runnable run = new Runnable() {
                 @Override
                 public void run() {
                     try {
+                        // 回调 rpc 钩子函数
                         doBeforeRpcHooks(RemotingHelper.parseChannelRemoteAddr(ctx.channel()), cmd);
+                        // 封装一个
                         final RemotingResponseCallback callback = new RemotingResponseCallback() {
                             @Override
                             public void callback(RemotingCommand response) {
+                                // 钩子函数
                                 doAfterRpcHooks(RemotingHelper.parseChannelRemoteAddr(ctx.channel()), cmd, response);
                                 if (!cmd.isOnewayRPC()) {
                                     if (response != null) {
@@ -220,7 +218,9 @@ public abstract class NettyRemotingAbstract {
                                 }
                             }
                         };
+                        // 请求处理是异步化的
                         if (pair.getObject1() instanceof AsyncNettyRequestProcessor) {
+                            // 异步处理
                             AsyncNettyRequestProcessor processor = (AsyncNettyRequestProcessor)pair.getObject1();
                             processor.asyncProcessRequest(ctx, cmd, callback);
                         } else {
@@ -242,6 +242,7 @@ public abstract class NettyRemotingAbstract {
                 }
             };
 
+            // 如果需要拒绝处理的话
             if (pair.getObject1().rejectRequest()) {
                 final RemotingCommand response = RemotingCommand.createResponseCommand(RemotingSysResponseCode.SYSTEM_BUSY,
                     "[REJECTREQUEST]system busy, start flow control for a while");
@@ -251,6 +252,7 @@ public abstract class NettyRemotingAbstract {
             }
 
             try {
+                // 封装任务
                 final RequestTask requestTask = new RequestTask(run, ctx.channel(), cmd);
                 pair.getObject2().submit(requestTask);
             } catch (RejectedExecutionException e) {
