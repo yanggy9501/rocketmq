@@ -136,14 +136,14 @@ public abstract class NettyRemotingAbstract {
      * </ul>
      * </p>
      *
-     * 如果说 broker 主动对 namesrv 发起或响应一个 rpc 调用请求，rpc调用和响应都是 RemotingCommand
-     * netty server 会反序列化rpc 调用请求，从字节数组封装称 RemotingCommand， 就会把这个 rpc 请求交给这个方法
-     * 来处理这个请求，
      *
      * @param ctx Channel handler context.
      * @param msg incoming remoting command.
      * @throws Exception if there were any error while processing the incoming command.
      */
+    /*xxx: 如果说 broker 主动对 namesrv 发起或响应一个 rpc 调用请求，rpc 调用和响应都是 RemotingCommand；
+        netty server 会反序列化 rpc 调用请求，从字节数组封装成 RemotingCommand，就会把这个 rpc 请求交给这个方法来处理这个请求
+    */
     public void processMessageReceived(ChannelHandlerContext ctx, RemotingCommand msg) throws Exception {
         final RemotingCommand cmd = msg;
         if (cmd != null) {
@@ -189,14 +189,14 @@ public abstract class NettyRemotingAbstract {
         final int opaque = cmd.getOpaque();
 
         if (pair != null) {
-            // 请求的处理的任务
+            // 封装成任务
             Runnable run = new Runnable() {
                 @Override
                 public void run() {
                     try {
                         // 回调 rpc 钩子函数
                         doBeforeRpcHooks(RemotingHelper.parseChannelRemoteAddr(ctx.channel()), cmd);
-                        // 封装一个
+                        // 封装一个 callback
                         final RemotingResponseCallback callback = new RemotingResponseCallback() {
                             @Override
                             public void callback(RemotingCommand response) {
@@ -223,8 +223,10 @@ public abstract class NettyRemotingAbstract {
                             // 异步处理
                             AsyncNettyRequestProcessor processor = (AsyncNettyRequestProcessor)pair.getObject1();
                             processor.asyncProcessRequest(ctx, cmd, callback);
+                        // 同步处理
                         } else {
                             NettyRequestProcessor processor = pair.getObject1();
+                            /** @see DefaultRequestProcessor#processRequest(ChannelHandlerContext, RemotingCommand) */
                             RemotingCommand response = processor.processRequest(ctx, cmd);
                             callback.callback(response);
                         }
@@ -254,6 +256,7 @@ public abstract class NettyRemotingAbstract {
             try {
                 // 封装任务
                 final RequestTask requestTask = new RequestTask(run, ctx.channel(), cmd);
+                // 添加任务给线程池处理
                 pair.getObject2().submit(requestTask);
             } catch (RejectedExecutionException e) {
                 if ((System.currentTimeMillis() % 10000) == 0) {

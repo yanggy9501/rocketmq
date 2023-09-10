@@ -67,7 +67,7 @@ public class NamesrvController {
     private final KVConfigManager kvConfigManager;
 
     /**
-     * 路由表
+     * 路由表管理器
      */
     private final RouteInfoManager routeInfoManager;
 
@@ -82,6 +82,9 @@ public class NamesrvController {
      */
     private BrokerHousekeepingService brokerHousekeepingService;
 
+    /**
+     * netty worker 线程池
+     */
     private ExecutorService remotingExecutor;
 
     /**
@@ -111,12 +114,12 @@ public class NamesrvController {
     public boolean initialize() {
         // 加载 KV 配置，磁盘文件加载
         this.kvConfigManager.load();
-        // 创建 NettyServer 网络处理对象
+        // 创建 NettyServer 网络处理对象，内部是 netty
         this.remotingServer = new NettyRemotingServer(this.nettyServerConfig, this.brokerHousekeepingService);
         // 初始化 Netty 服务器的工作线程池
         this.remotingExecutor =
             Executors.newFixedThreadPool(nettyServerConfig.getServerWorkerThreads(), new ThreadFactoryImpl("RemotingExecutorThread_"));
-        // 注册 NameServer 的 Processor 注册到 RemotingServer 中（如：处理心跳的）。
+        // 注册 NameServer 的 Processor 注册到 RemotingServer 中（如：处理心跳的）
         this.registerProcessor();
         // 路由剔除：定时任务：每间隔10S扫描一次Broker，移除不活跃的Broker
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
@@ -126,6 +129,7 @@ public class NamesrvController {
                 NamesrvController.this.routeInfoManager.scanNotActiveBroker();
             }
         }, 5, 10, TimeUnit.SECONDS);
+
         // 定时任务：每间隔10min打印一次KV配置
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
@@ -134,6 +138,7 @@ public class NamesrvController {
                 NamesrvController.this.kvConfigManager.printAllPeriodically();
             }
         }, 1, 10, TimeUnit.MINUTES);
+
         //TLS是一个安全传输层协议，相关参数只能用JVM指令注入
         if (TlsSystemConfig.tlsMode != TlsMode.DISABLED) {
             // Register a listener to reload SslContext
@@ -181,6 +186,7 @@ public class NamesrvController {
             this.remotingServer.registerDefaultProcessor(new ClusterTestRequestProcessor(this, namesrvConfig.getProductEnvName()),
                 this.remotingExecutor);
         } else {
+            // 注册 Processor，处理的核心
             this.remotingServer.registerDefaultProcessor(new DefaultRequestProcessor(this), this.remotingExecutor);
         }
     }

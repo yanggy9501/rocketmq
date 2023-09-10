@@ -176,6 +176,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
 
     @Override
     public void start() {
+        // netty 的 EventLoopGroup
         this.defaultEventExecutorGroup = new DefaultEventExecutorGroup(
             nettyServerConfig.getServerWorkerThreads(),
             new ThreadFactory() {
@@ -188,8 +189,9 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
                 }
             });
 
+        // 准备 handler
         prepareSharableHandlers();
-        // Netty服务启动的核心流程
+        // Netty 服务启动的核心流程
         ServerBootstrap childHandler =
             this.serverBootstrap.group(this.eventLoopGroupBoss, this.eventLoopGroupSelector)
                 .channel(useEpoll() ? EpollServerSocketChannel.class : NioServerSocketChannel.class)
@@ -203,9 +205,9 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
                 .childHandler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     public void initChannel(SocketChannel ch) throws Exception {
-                        //Netty的核心服务流程，encoder和decoder，二进制传输协议。
-                        //RocketMQ中的二进制传输协议比较复杂，是否能按照JSON自定义二进制协议？
-                        //serverHandler负责最关键的网络请求处理。
+                        // Netty的核心服务流程，encoder和decoder，二进制传输协议。
+                        // RocketMQ中的二进制传输协议比较复杂，是否能按照JSON自定义二进制协议？
+                        // serverHandler 负责最关键的网络请求处理。
                         ch.pipeline()
                             .addLast(defaultEventExecutorGroup, HANDSHAKE_HANDLER_NAME, handshakeHandler)
                             .addLast(defaultEventExecutorGroup,
@@ -410,9 +412,11 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
         }
     }
 
+    /*xxx：ChannelInboundHandler*/
     @ChannelHandler.Sharable
     class NettyServerHandler extends SimpleChannelInboundHandler<RemotingCommand> {
 
+        /*xxx: 处理读事件 */
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, RemotingCommand msg) throws Exception {
             processMessageReceived(ctx, msg);

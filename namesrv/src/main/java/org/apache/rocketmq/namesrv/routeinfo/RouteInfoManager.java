@@ -70,7 +70,7 @@ public class RouteInfoManager {
     private final HashMap<String/* clusterName */, Set<String/* brokerName */>> clusterAddrTable;
 
     /**
-     * 保活数据结构
+     * broker 存活的数据结构
      */
     private final HashMap<String/* brokerAddr */, BrokerLiveInfo> brokerLiveTable;
 
@@ -133,7 +133,7 @@ public class RouteInfoManager {
      * @param brokerAddr broker 机器地址
      * @param brokerName broker 所属组的名称
      * @param brokerId broker id
-     * @param haServerAddr 跟你的这个 broker 互为高可用 ha的一个机器
+     * @param haServerAddr 跟你的这个 broker 互为高可用 ha 的一个机器
      * @param topicConfigWrapper topic 配置数据
      * @param filterServerList broker 机器上部署的 filter server 列表
      * @param channel netty 网络连接
@@ -483,8 +483,8 @@ public class RouteInfoManager {
     }
 
     /**
-     * 路由剔除：剔除失效的 broker，将 broker相关的信息从 brokerLiveTable 中移除掉，同时销毁掉netty对应的channel。
-     *          brokerLiveTable 是一个hashmap，归 RouteInfoManager类持有。
+     * 路由剔除：剔除失效的 broker，将 broker相关的信息从 brokerLiveTable 中移除掉，同时销毁掉 netty 对应的 channel。
+     *          brokerLiveTable 是一个 hashmap，归 RouteInfoManager类持有。
      * 定时保活：如果超时则关闭与 broker 连接
      */
     public void scanNotActiveBroker() {
@@ -492,6 +492,7 @@ public class RouteInfoManager {
         while (it.hasNext()) {
             Entry<String, BrokerLiveInfo> next = it.next();
             long last = next.getValue().getLastUpdateTimestamp();
+            // 超时则移除
             if ((last + BROKER_CHANNEL_EXPIRED_TIME) < System.currentTimeMillis()) {
                 RemotingUtil.closeChannel(next.getValue().getChannel());
                 it.remove();
@@ -501,6 +502,7 @@ public class RouteInfoManager {
         }
     }
 
+    /*xxx: 移除已经‘失活’的 broker */
     public void onChannelDestroy(String remoteAddr, Channel channel) {
         String brokerAddrFound = null;
         if (channel != null) {
@@ -814,7 +816,7 @@ public class RouteInfoManager {
 }
 
 /**
- * 保活信息
+ * broker 存活信息
  */
 class BrokerLiveInfo {
     /**
@@ -828,7 +830,7 @@ class BrokerLiveInfo {
     private DataVersion dataVersion;
 
     /**
-     * netty 网络连接
+     * netty 网络 Channel
      */
     private Channel channel;
 

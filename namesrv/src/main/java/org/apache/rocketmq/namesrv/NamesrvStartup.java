@@ -45,10 +45,10 @@ import java.util.concurrent.Callable;
 /**
  * NameServer 启动类
  * NameServer 担当着路由注册、发现、动态地维护broker相关信息的角色, NameServer 不提供Master-slave同步机制，但是能够保证数据的最终一致性。
- * 1. 动态路由发现和注册功能，broker 启动时，会将brokerAddr 注册到NameServer里；路由发现是指客户端会定时的向NameServer根据topic拉取路由的最新信息
- * 2. 动态剔除功能，每隔10 s NameServer 会自动扫描所有的broker, 如果有broker失效，那么会从地址列表里将其剔除掉。
+ * 1. 动态路由发现和注册功能，broker 启动时，会将 brokerAddr 注册到 NameServer 里；路由发现是指客户端会定时的向 NameServer根据 topic 拉取路由的最新信息
+ * 2. 动态剔除功能，每隔 10 s NameServer 会自动扫描所有的 broker, 如果有 broker失效，那么会从地址列表里将其剔除掉。
  *
- * PS: 需要配置系统环境变量 ROCKETMQ_HOME=ROCKETMQ的主目录（随意:配置环境变量(值为RocketMQ的安装路径)）
+ * PS: 需要配置环境变量 ROCKETMQ_HOME=ROCKETMQ的主目录（随意:配置环境变量(值为RocketMQ的安装路径)）
  * 在启动参数配置环境变化，或者在系统中配置环境变量，如
  * ROCKETMQ_HOME=\rocketmq-all-4.9.1\rocketmq-all-4.9.1-source-release
  */
@@ -63,9 +63,9 @@ public class NamesrvStartup {
     }
 
     public static NamesrvController main0(String[] args) {
-        //1. NamesrvController 为 NameServer的核心组件，类似于Web应用中的Controller，负责接收处理网络请求。
+        //1. NamesrvController 为 NameServer 的核心组件，类似于Web应用中的 Controller，负责接收处理网络请求。
         try {
-            // 创建 NameSrvController，NameSrv的配置存放在 user.home\namesrv\ 目录下
+            // 创建 NameSrvController，NameSrv 的配置存放在 user.home\namesrv\ 目录下
             NamesrvController controller = createNamesrvController(args);
             // 启动 Namesrv
             start(controller);
@@ -93,13 +93,13 @@ public class NamesrvStartup {
             System.exit(-1);
             return null;
         }
-        // K1 NameServer的三个核心配置
+        // NameServer 的三个核心配置 NamesrvConfig
         final NamesrvConfig namesrvConfig = new NamesrvConfig();
-        // Netty 网络通信配置
+        // Netty 网络通信配置 NettyServerConfig
         final NettyServerConfig nettyServerConfig = new NettyServerConfig();
         // Netty 默认端口 9876
         nettyServerConfig.setListenPort(9876);
-        // -c 和 -p 参数解析，-c config 通过启动命令指定配置以定制化的额外配置NamesrvConfig、NettyServerConfig
+        // -c 和 -p 参数解析，-c config 通过启动命令指定配置以定制化的额外配置 NamesrvConfig、NettyServerConfig
         if (commandLine.hasOption('c')) {
             String file = commandLine.getOptionValue('c');
             if (file != null) {
