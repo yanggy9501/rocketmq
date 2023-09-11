@@ -16,6 +16,7 @@
  */
 package org.apache.rocketmq.remoting.netty;
 
+/*xxx: 配置的是与NameSrv 保持连接的请求 */
 public class NettyClientConfig {
     /**
      * Worker thread number

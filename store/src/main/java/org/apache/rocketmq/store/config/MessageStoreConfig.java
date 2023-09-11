@@ -16,10 +16,12 @@
  */
 package org.apache.rocketmq.store.config;
 
-import java.io.File;
 import org.apache.rocketmq.common.annotation.ImportantField;
 import org.apache.rocketmq.store.ConsumeQueue;
 
+import java.io.File;
+
+/*xxx: 消息存储配置 */
 public class MessageStoreConfig {
     //The root directory in which the log data is kept
     @ImportantField
@@ -120,8 +122,12 @@ public class MessageStoreConfig {
     @ImportantField
     private String haMasterAddress = null;
     private int haSlaveFallbehindMax = 1024 * 1024 * 256;
+
+    /** 异步 MASTER */
     @ImportantField
     private BrokerRole brokerRole = BrokerRole.ASYNC_MASTER;
+
+    /** 异步刷盘 */
     @ImportantField
     private FlushDiskType flushDiskType = FlushDiskType.ASYNC_FLUSH;
     private int syncFlushTimeout = 1000 * 5;

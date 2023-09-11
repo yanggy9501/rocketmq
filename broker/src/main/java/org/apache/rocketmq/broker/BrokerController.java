@@ -16,29 +16,8 @@
  */
 package org.apache.rocketmq.broker;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import org.apache.rocketmq.acl.AccessValidator;
-import org.apache.rocketmq.broker.client.ClientHousekeepingService;
-import org.apache.rocketmq.broker.client.ConsumerIdsChangeListener;
-import org.apache.rocketmq.broker.client.ConsumerManager;
-import org.apache.rocketmq.broker.client.DefaultConsumerIdsChangeListener;
-import org.apache.rocketmq.broker.client.ProducerManager;
+import org.apache.rocketmq.broker.client.*;
 import org.apache.rocketmq.broker.client.net.Broker2Client;
 import org.apache.rocketmq.broker.client.rebalance.RebalanceLockManager;
 import org.apache.rocketmq.broker.dledger.DLedgerRoleChangeHandler;
@@ -55,14 +34,7 @@ import org.apache.rocketmq.broker.offset.ConsumerOffsetManager;
 import org.apache.rocketmq.broker.out.BrokerOuterAPI;
 import org.apache.rocketmq.broker.plugin.MessageStoreFactory;
 import org.apache.rocketmq.broker.plugin.MessageStorePluginContext;
-import org.apache.rocketmq.broker.processor.AdminBrokerProcessor;
-import org.apache.rocketmq.broker.processor.ClientManageProcessor;
-import org.apache.rocketmq.broker.processor.ConsumerManageProcessor;
-import org.apache.rocketmq.broker.processor.EndTransactionProcessor;
-import org.apache.rocketmq.broker.processor.PullMessageProcessor;
-import org.apache.rocketmq.broker.processor.QueryMessageProcessor;
-import org.apache.rocketmq.broker.processor.ReplyMessageProcessor;
-import org.apache.rocketmq.broker.processor.SendMessageProcessor;
+import org.apache.rocketmq.broker.processor.*;
 import org.apache.rocketmq.broker.slave.SlaveSynchronize;
 import org.apache.rocketmq.broker.subscription.SubscriptionGroupManager;
 import org.apache.rocketmq.broker.topic.TopicConfigManager;
@@ -73,12 +45,7 @@ import org.apache.rocketmq.broker.transaction.queue.DefaultTransactionalMessageC
 import org.apache.rocketmq.broker.transaction.queue.TransactionalMessageBridge;
 import org.apache.rocketmq.broker.transaction.queue.TransactionalMessageServiceImpl;
 import org.apache.rocketmq.broker.util.ServiceProvider;
-import org.apache.rocketmq.common.BrokerConfig;
-import org.apache.rocketmq.common.Configuration;
-import org.apache.rocketmq.common.DataVersion;
-import org.apache.rocketmq.common.ThreadFactoryImpl;
-import org.apache.rocketmq.common.TopicConfig;
-import org.apache.rocketmq.common.UtilAll;
+import org.apache.rocketmq.common.*;
 import org.apache.rocketmq.common.constant.LoggerName;
 import org.apache.rocketmq.common.constant.PermName;
 import org.apache.rocketmq.common.namesrv.RegisterBrokerResult;
@@ -90,12 +57,7 @@ import org.apache.rocketmq.logging.InternalLoggerFactory;
 import org.apache.rocketmq.remoting.RPCHook;
 import org.apache.rocketmq.remoting.RemotingServer;
 import org.apache.rocketmq.remoting.common.TlsMode;
-import org.apache.rocketmq.remoting.netty.NettyClientConfig;
-import org.apache.rocketmq.remoting.netty.NettyRemotingServer;
-import org.apache.rocketmq.remoting.netty.NettyRequestProcessor;
-import org.apache.rocketmq.remoting.netty.NettyServerConfig;
-import org.apache.rocketmq.remoting.netty.RequestTask;
-import org.apache.rocketmq.remoting.netty.TlsSystemConfig;
+import org.apache.rocketmq.remoting.netty.*;
 import org.apache.rocketmq.remoting.protocol.RemotingCommand;
 import org.apache.rocketmq.srvutil.FileWatchService;
 import org.apache.rocketmq.store.DefaultMessageStore;
@@ -107,6 +69,12 @@ import org.apache.rocketmq.store.dledger.DLedgerCommitLog;
 import org.apache.rocketmq.store.stats.BrokerStats;
 import org.apache.rocketmq.store.stats.BrokerStatsManager;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.*;
+import java.util.concurrent.*;
+
+/*xxx: Broker Controller 类似 web 的 Controller */
 public class BrokerController {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.BROKER_LOGGER_NAME);
     private static final InternalLogger LOG_PROTECTION = InternalLoggerFactory.getLogger(LoggerName.PROTECTION_LOGGER_NAME);
@@ -230,15 +198,15 @@ public class BrokerController {
     public BlockingQueue<Runnable> getQueryThreadPoolQueue() {
         return queryThreadPoolQueue;
     }
-    //Broker初始化过程
+    // Broker 初始化过程
     public boolean initialize() throws CloneNotSupportedException {
-        //加载磁盘上的配置信息。
+        // 加载磁盘上的配置信息: 价值topic 配置管理器，消息位移管理器，订阅组管理器，消费过滤管理器
         boolean result = this.topicConfigManager.load();
-
         result = result && this.consumerOffsetManager.load();
         result = result && this.subscriptionGroupManager.load();
         result = result && this.consumerFilterManager.load();
-        //配置加载成功后，构建消息存储管理组件
+
+        // 加载成功后，构建消息存储管理组件 MessageStore
         if (result) {
             try {
                 this.messageStore =
@@ -258,17 +226,18 @@ public class BrokerController {
                 log.error("Failed to initialize", e);
             }
         }
-        //加载磁盘文件
+        // 将磁盘中 commitlog 和 consumerQueue 文件加载到内存中
         result = result && this.messageStore.load();
-        //K2 Broker的Netty组件。注意，Broekr即需要是Netty的服务端，又需要是Netty的客户端。
+        // Broker 的 Netty 组件。注意，Broker 即需要是 Netty 的服务端，又需要是 Netty的客户端。
         if (result) {
-            //Netty网络组件
+            // Netty网络组件
             this.remotingServer = new NettyRemotingServer(this.nettyServerConfig, this.clientHousekeepingService);
             NettyServerConfig fastConfig = (NettyServerConfig) this.nettyServerConfig.clone();
+            // 默认是 8886
             fastConfig.setListenPort(nettyServerConfig.getListenPort() - 2);
-            //这个fastRemotingServer与RemotingServer功能基本差不多，处理VIP端口请求
+            // 这个 fastRemotingServer 与 RemotingServer 功能基本差不多，处理 VIP 端口请求
             this.fastRemotingServer = new NettyRemotingServer(fastConfig, this.clientHousekeepingService);
-            //发送消息的线程出
+            // 发送消息的线程出
             this.sendMessageExecutor = new BrokerFixedThreadPoolExecutor(
                 this.brokerConfig.getSendMessageThreadPoolNums(),
                 this.brokerConfig.getSendMessageThreadPoolNums(),
@@ -276,7 +245,7 @@ public class BrokerController {
                 TimeUnit.MILLISECONDS,
                 this.sendThreadPoolQueue,
                 new ThreadFactoryImpl("SendMessageThread_"));
-            //处理consumer的pull请求的线程池
+            // 处理consumer的pull请求的线程池
             this.pullMessageExecutor = new BrokerFixedThreadPoolExecutor(
                 this.brokerConfig.getPullMessageThreadPoolNums(),
                 this.brokerConfig.getPullMessageThreadPoolNums(),

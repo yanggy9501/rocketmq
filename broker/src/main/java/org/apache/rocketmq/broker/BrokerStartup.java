@@ -48,6 +48,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.apache.rocketmq.remoting.netty.TlsSystemConfig.TLS_ENABLE;
 
+/*xxx: broker 启动了 */
 public class BrokerStartup {
     public static Properties properties = null;
     public static CommandLine commandLine = null;
@@ -86,7 +87,8 @@ public class BrokerStartup {
             controller.shutdown();
         }
     }
-    //K1 创建Broker核心配置
+
+    /*xxx: 创建 Broker 核心配置 */
     public static BrokerController createBrokerController(String[] args) {
         System.setProperty(RemotingCommand.REMOTING_VERSION_KEY, Integer.toString(MQVersion.CURRENT_VERSION));
 
@@ -106,22 +108,26 @@ public class BrokerStartup {
             if (null == commandLine) {
                 System.exit(-1);
             }
-            //K1 Broker的核心配置
+
+            // 初始化 broker 心跳配置
+            // Broker的核心配置
             final BrokerConfig brokerConfig = new BrokerConfig();
+            // 消息的发送者与消息的消费者请求的 netty 网络配置
             final NettyServerConfig nettyServerConfig = new NettyServerConfig();
+            // 与 namesrv 的网络配置
             final NettyClientConfig nettyClientConfig = new NettyClientConfig();
 
             nettyClientConfig.setUseTLS(Boolean.parseBoolean(System.getProperty(TLS_ENABLE,
                 String.valueOf(TlsSystemConfig.tlsMode == TlsMode.ENFORCING))));
             nettyServerConfig.setListenPort(10911);//Netty服务监听端口10911
-            //K2 存储相关的配置信息
+            // 存储相关的配置信息
             final MessageStoreConfig messageStoreConfig = new MessageStoreConfig();
-            //SLAVE使用的消息常驻内存比例比Master低10%
+            // SLAVE使用的消息常驻内存比例比Master低10%
             if (BrokerRole.SLAVE == messageStoreConfig.getBrokerRole()) {
                 int ratio = messageStoreConfig.getAccessMessageInMemoryMaxRatio() - 10;
                 messageStoreConfig.setAccessMessageInMemoryMaxRatio(ratio);
             }
-            //Broker只解析-c参数
+            // Broker只解析-c参数
             if (commandLine.hasOption('c')) {
                 String file = commandLine.getOptionValue('c');
                 if (file != null) {
@@ -162,7 +168,7 @@ public class BrokerStartup {
                     System.exit(-3);
                 }
             }
-            //通过brokerId判断主从
+            // 通过brokerId判断主从
             switch (messageStoreConfig.getBrokerRole()) {
                 case ASYNC_MASTER:
                 case SYNC_MASTER:
@@ -178,7 +184,7 @@ public class BrokerStartup {
                 default:
                     break;
             }
-            //Dledger集群的所有Broker节点ID都是-1
+            // Dledger集群的所有Broker节点ID都是-1
             if (messageStoreConfig.isEnableDLegerCommitLog()) {
                 brokerConfig.setBrokerId(-1);
             }
@@ -211,7 +217,7 @@ public class BrokerStartup {
             MixAll.printObjectProperties(log, nettyServerConfig);
             MixAll.printObjectProperties(log, nettyClientConfig);
             MixAll.printObjectProperties(log, messageStoreConfig);
-            //K1 创建核心的BrokerController
+            // 创建核心的 BrokerController
             final BrokerController controller = new BrokerController(
                 brokerConfig,
                 nettyServerConfig,
@@ -219,7 +225,7 @@ public class BrokerStartup {
                 messageStoreConfig);
             // remember all configs to prevent discard
             controller.getConfiguration().registerConfig(properties);
-            //K1 初始化BrokerController。注意从中理解Broekr的组件结构
+            // 初始化 BrokerController。注意从中理解 Broker 的组件结构
             boolean initResult = controller.initialize();
             if (!initResult) {
                 controller.shutdown();

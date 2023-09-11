@@ -17,7 +17,7 @@
 package org.apache.rocketmq.remoting.netty;
 
 /**
- * Netty 网络通信配置
+ * Netty 网络通信配置，是配置的处理消息发送者和消息消费者发送过来的请求
  */
 public class NettyServerConfig implements Cloneable {
     private int listenPort = 8888;
