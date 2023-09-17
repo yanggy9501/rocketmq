@@ -18,6 +18,17 @@ package org.apache.rocketmq.store;
 
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
+import org.apache.rocketmq.common.UtilAll;
+import org.apache.rocketmq.common.constant.LoggerName;
+import org.apache.rocketmq.common.message.MessageExt;
+import org.apache.rocketmq.common.message.MessageExtBatch;
+import org.apache.rocketmq.logging.InternalLogger;
+import org.apache.rocketmq.logging.InternalLoggerFactory;
+import org.apache.rocketmq.store.CommitLog.PutMessageContext;
+import org.apache.rocketmq.store.config.FlushDiskType;
+import org.apache.rocketmq.store.util.LibC;
+import sun.nio.ch.DirectBuffer;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -31,38 +42,46 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import org.apache.rocketmq.common.UtilAll;
-import org.apache.rocketmq.common.constant.LoggerName;
-import org.apache.rocketmq.logging.InternalLogger;
-import org.apache.rocketmq.logging.InternalLoggerFactory;
-import org.apache.rocketmq.common.message.MessageExt;
-import org.apache.rocketmq.common.message.MessageExtBatch;
-import org.apache.rocketmq.store.CommitLog.PutMessageContext;
-import org.apache.rocketmq.store.config.FlushDiskType;
-import org.apache.rocketmq.store.util.LibC;
-import sun.nio.ch.DirectBuffer;
 
+/**xxx: 内存映射,  rocketmq的store借鉴了内存页映射的设计，通过内存映射来查找内存块，MappedFile是rocketmq的内存映射文件类，通过MappedByteBuffer 来存储页与内存的映射*/
 public class MappedFile extends ReferenceResource {
+    /**xxx: 每页数据的大小为4KB, 类似于操作系统页的概念，数据存储到页里 */
     public static final int OS_PAGE_SIZE = 1024 * 4;
     protected static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.STORE_LOGGER_NAME);
 
+    /**xxx: 映射的总的虚拟内存 */
     private static final AtomicLong TOTAL_MAPPED_VIRTUAL_MEMORY = new AtomicLong(0);
 
+    /**xxx: 映射文件数量 */
     private static final AtomicInteger TOTAL_MAPPED_FILES = new AtomicInteger(0);
+
+    /**xxx: 写指针、提交指针 */
     protected final AtomicInteger wrotePosition = new AtomicInteger(0);
     protected final AtomicInteger committedPosition = new AtomicInteger(0);
     private final AtomicInteger flushedPosition = new AtomicInteger(0);
+
+    /**xxx: 每个mappedFile的大小 */
     protected int fileSize;
+
+    /**xxx: 读写通道，使用RandomAccessFile 来进行读写 */
     protected FileChannel fileChannel;
     /**
      * Message will put to here first, and then reput to FileChannel if writeBuffer is not null.
      */
+    /**xxx: 消息先放到缓存区里，当缓冲区里有数据时，会将缓存区里的数据写入到FileChannel里，最终写入到磁盘文件里 */
     protected ByteBuffer writeBuffer = null;
+
+    /**xxx: 短暂的缓冲区 */
     protected TransientStorePool transientStorePool = null;
     private String fileName;
+
+    /**xxx:   fileFromOffSet 是当前文件开始的全局偏移量*/
     private long fileFromOffset;
     private File file;
+
+    /**xxx: 内存文件的映射区域存放到MappedByteBuffer里 */
     private MappedByteBuffer mappedByteBuffer;
+
     private volatile long storeTimestamp = 0;
     private boolean firstCreateInQueue = false;
 

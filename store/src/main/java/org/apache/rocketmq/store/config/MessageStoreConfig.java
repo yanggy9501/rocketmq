@@ -21,20 +21,25 @@ import org.apache.rocketmq.store.ConsumeQueue;
 
 import java.io.File;
 
-/*xxx: 消息存储配置 */
+/**xxx: 消息存储配置 */
 public class MessageStoreConfig {
     //The root directory in which the log data is kept
+    /**xxx: 主要配置消息存储根路径 */
     @ImportantField
     private String storePathRootDir = System.getProperty("user.home") + File.separator + "store";
 
     //The directory in which the commitlog is kept
+    /**xxx: 消息存储的根路径 */
     @ImportantField
     private String storePathCommitLog = System.getProperty("user.home") + File.separator + "store"
         + File.separator + "commitlog";
 
     // CommitLog file size,default is 1G
+    /**xxx: commitLogFile 消息文件大小(默认大小为1G) */
     private int mappedFileSizeCommitLog = 1024 * 1024 * 1024;
+
     // ConsumeQueue file size,default is 30W
+    /**xxx: topic队列里的映射文件每个队列里子文件的大小*/
     private int mappedFileSizeConsumeQueue = 300000 * ConsumeQueue.CQ_STORE_UNIT_SIZE;
     // enable consume queue ext
     private boolean enableConsumeQueueExt = false;
@@ -82,6 +87,8 @@ public class MessageStoreConfig {
     // Flow control for ConsumeQueue
     private int putMsgIndexHightWater = 600000;
     // The maximum size of message,default is 4M
+
+    /*xxx: 消息的最大长度，默认4M */
     private int maxMessageSize = 1024 * 1024 * 4;
     // Whether check the CRC32 of the records consumed.
     // This ensures no on-the-wire or on-disk corruption to the messages occurred.
@@ -110,6 +117,8 @@ public class MessageStoreConfig {
     private int accessMessageInMemoryMaxRatio = 40;
     @ImportantField
     private boolean messageIndexEnable = true;
+
+    /**xxx: 哈希槽数量，默认大小50万个 */
     private int maxHashSlotNum = 5000000;
     private int maxIndexNum = 5000000 * 4;
     private int maxMsgsNumBatch = 64;
@@ -144,6 +153,7 @@ public class MessageStoreConfig {
     private int defaultQueryMaxNum = 32;
 
     @ImportantField
+    /**xxx: 堆外内存缓存池开关 */
     private boolean transientStorePoolEnable = false;
     private int transientStorePoolSize = 5;
     private boolean fastFailIfNoBufferInStorePool = false;

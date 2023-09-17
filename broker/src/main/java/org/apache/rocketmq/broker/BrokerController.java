@@ -822,9 +822,10 @@ public class BrokerController {
     public String getBrokerAddr() {
         return this.brokerConfig.getBrokerIP1() + ":" + this.nettyServerConfig.getListenPort();
     }
-    //BrokerController核心的启动方法
+
+    // BrokerController核心的启动方法
     public void start() throws Exception {
-        //存储组件，这里启动服务主要是为了将CommitLog的写入事件分发给ComsumeQueue和IndexFile
+        // 存储组件，这里启动服务主要是为了将CommitLog的写入事件分发给ComsumeQueue和IndexFile
         if (this.messageStore != null) {
             this.messageStore.start();
         }

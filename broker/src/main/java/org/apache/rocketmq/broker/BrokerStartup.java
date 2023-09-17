@@ -48,7 +48,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.apache.rocketmq.remoting.netty.TlsSystemConfig.TLS_ENABLE;
 
-/*xxx: broker 启动了 */
+/*xxx: broker 启动类 */
 public class BrokerStartup {
     public static Properties properties = null;
     public static CommandLine commandLine = null;
@@ -61,7 +61,7 @@ public class BrokerStartup {
 
     public static BrokerController start(BrokerController controller) {
         try {
-            //K1 BrokerController启动
+            // BrokerController 启动
             controller.start();
 
             String tip = "The broker[" + controller.getBrokerConfig().getBrokerName() + ", "
@@ -184,7 +184,7 @@ public class BrokerStartup {
                 default:
                     break;
             }
-            // Dledger集群的所有Broker节点ID都是-1
+            // Dledger 集群的所有Broker节点ID都是-1
             if (messageStoreConfig.isEnableDLegerCommitLog()) {
                 brokerConfig.setBrokerId(-1);
             }
@@ -231,7 +231,7 @@ public class BrokerStartup {
                 controller.shutdown();
                 System.exit(-3);
             }
-            //优雅关闭，释放资源
+            // 优雅关闭，释放资源
             Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
                 private volatile boolean hasShutdown = false;
                 private AtomicInteger shutdownTimes = new AtomicInteger(0);

@@ -30,13 +30,6 @@ import io.openmessaging.storage.dledger.store.file.MmapFile;
 import io.openmessaging.storage.dledger.store.file.MmapFileList;
 import io.openmessaging.storage.dledger.store.file.SelectMmapBufferResult;
 import io.openmessaging.storage.dledger.utils.DLedgerUtils;
-import java.net.Inet6Address;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import org.apache.rocketmq.common.UtilAll;
 import org.apache.rocketmq.common.message.MessageAccessor;
 import org.apache.rocketmq.common.message.MessageConst;
@@ -44,22 +37,21 @@ import org.apache.rocketmq.common.message.MessageDecoder;
 import org.apache.rocketmq.common.message.MessageExtBatch;
 import org.apache.rocketmq.common.sysflag.MessageSysFlag;
 import org.apache.rocketmq.common.topic.TopicValidator;
-import org.apache.rocketmq.store.AppendMessageResult;
-import org.apache.rocketmq.store.AppendMessageStatus;
-import org.apache.rocketmq.store.CommitLog;
-import org.apache.rocketmq.store.DefaultMessageStore;
-import org.apache.rocketmq.store.DispatchRequest;
-import org.apache.rocketmq.store.MappedFile;
-import org.apache.rocketmq.store.MessageExtBrokerInner;
-import org.apache.rocketmq.store.PutMessageResult;
-import org.apache.rocketmq.store.PutMessageStatus;
-import org.apache.rocketmq.store.SelectMappedBufferResult;
-import org.apache.rocketmq.store.StoreStatsService;
+import org.apache.rocketmq.store.*;
 import org.apache.rocketmq.store.schedule.ScheduleMessageService;
+
+import java.net.Inet6Address;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Store all metadata downtime for recovery, data protection reliability
  */
+/**xxx:   阿里的开源中间件, 用来管理rocketmq的集群，可以平滑地实现rocketmq的主从节点切换*/
 public class DLedgerCommitLog extends CommitLog {
     private final DLedgerServer dLedgerServer;
     private final DLedgerConfig dLedgerConfig;
