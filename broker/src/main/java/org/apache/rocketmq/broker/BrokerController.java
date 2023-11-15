@@ -198,9 +198,20 @@ public class BrokerController {
     public BlockingQueue<Runnable> getQueryThreadPoolQueue() {
         return queryThreadPoolQueue;
     }
-    // Broker 初始化过程
+
+    /**
+     * Broker 初始化过程 ->
+     * 1.加载 broker 中的主题信息
+     * 2.加载消息进度，订阅消息，消息过滤类等信息
+     * 3.加载消息存储文件
+     * 4.开启持久化配置相关定时任务
+     * 路径：xxx/store/config/ 下的各种 json 文件，由于 broker 可能会重启、宕机等情况所有将一些重要信息持久化到 json文件中
+     *
+     * @return
+     * @throws CloneNotSupportedException
+     */
     public boolean initialize() throws CloneNotSupportedException {
-        // 加载磁盘上的配置信息: 价值topic 配置管理器，消息位移管理器，订阅组管理器，消费过滤管理器
+        // 加载磁盘上的配置信息: 加载 topic 配置管理器，消息位移管理器，订阅组管理器，消费过滤管理器
         boolean result = this.topicConfigManager.load();
         result = result && this.consumerOffsetManager.load();
         result = result && this.subscriptionGroupManager.load();
@@ -226,7 +237,7 @@ public class BrokerController {
                 log.error("Failed to initialize", e);
             }
         }
-        // 将磁盘中 commitlog 和 consumerQueue 文件加载到内存中
+        // 将磁盘中 store/commitlog/ 和 store/consumerQueue/ 目录文件加载到内存中
         result = result && this.messageStore.load();
         // Broker 的 Netty 组件。注意，Broker 即需要是 Netty 的服务端，又需要是 Netty的客户端。
         if (result) {

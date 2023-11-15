@@ -94,6 +94,7 @@ public class MappedFile extends ReferenceResource {
 
     public MappedFile(final String fileName, final int fileSize,
         final TransientStorePool transientStorePool) throws IOException {
+        // 初始化 - 里面有零拷贝的应用
         init(fileName, fileSize, transientStorePool);
     }
 
@@ -178,7 +179,11 @@ public class MappedFile extends ReferenceResource {
         ensureDirOK(this.file.getParent());
 
         try {
+            // 文件通道 fileChannel
             this.fileChannel = new RandomAccessFile(this.file, "rw").getChannel();
+            // fileChannel 配合 ByteBuffer，将读写的数据缓存到内存中（操作大文件时可以显著的提高效率）
+            // mappedByteBuffer（零拷贝值内存映射 mmap）
+            // FileChannel 定义了一个 map（）方法，它可以吧一个文件从 position 位置开始的 size 大小的内存区域映射为内存（内存即文件，文件即内存）
             this.mappedByteBuffer = this.fileChannel.map(MapMode.READ_WRITE, 0, fileSize);
             TOTAL_MAPPED_VIRTUAL_MEMORY.addAndGet(fileSize);
             TOTAL_MAPPED_FILES.incrementAndGet();

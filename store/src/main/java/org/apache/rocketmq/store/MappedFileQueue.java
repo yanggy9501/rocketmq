@@ -36,7 +36,10 @@ public class MappedFileQueue {
     private final String storePath;
 
     private final int mappedFileSize;
-    //文件映射集合，使用CopyOnWriteArrayList保证高并发下的数据一致性。
+
+    /**
+     * 文件映射集合，使用 CopyOnWriteArrayList 保证高并发下的数据一致性。
+     */
     private final CopyOnWriteArrayList<MappedFile> mappedFiles = new CopyOnWriteArrayList<MappedFile>();
 
     private final AllocateMappedFileService allocateMappedFileService;
@@ -142,6 +145,11 @@ public class MappedFileQueue {
         }
     }
 
+    /**
+     * 加载 store 中消息文件
+     * mq 存储设计中消息实体 store/commitlog/ 中一般只有 “一个” 文件；而 consumerqueue 中有多个文件夹（一个文件就是一个topic）
+     * 每个文件夹下还有多个文件，所以做了一个映射叫 mappedFile
+     */
     public boolean load() {
         File dir = new File(this.storePath);
         File[] files = dir.listFiles();

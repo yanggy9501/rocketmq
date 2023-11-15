@@ -48,7 +48,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.apache.rocketmq.remoting.netty.TlsSystemConfig.TLS_ENABLE;
 
-/*xxx: broker 启动类 */
+/*
+* xxx: broker 启动类
+* 命令行参数指定配置文件： -c E:\volume\java\resource-code\rocketmq-all-4.9.1\rocketmq-all-4.9.1-source-release\ROCKETMQ_HOME\conf\broker.conf
+* 或者指定 ROCKETMQ_HOME 的环境遍历在环境目录下的/conf/broker.conf 就是默认配置文件
+**/
 public class BrokerStartup {
     public static Properties properties = null;
     public static CommandLine commandLine = null;
@@ -88,7 +92,7 @@ public class BrokerStartup {
         }
     }
 
-    /*xxx: 创建 Broker 核心配置 */
+    /*xxx: 创建 Broker 核心类 */
     public static BrokerController createBrokerController(String[] args) {
         System.setProperty(RemotingCommand.REMOTING_VERSION_KEY, Integer.toString(MQVersion.CURRENT_VERSION));
 
@@ -101,7 +105,7 @@ public class BrokerStartup {
         }
 
         try {
-            //PackageConflictDetect.detectFastjson();
+            // 解析命令行参数
             Options options = ServerUtil.buildCommandlineOptions(new Options());
             commandLine = ServerUtil.parseCmdLine("mqbroker", args, buildCommandlineOptions(options),
                 new PosixParser());
@@ -110,24 +114,25 @@ public class BrokerStartup {
             }
 
             // 初始化 broker 心跳配置
-            // Broker的核心配置
+            // Broker 配置
             final BrokerConfig brokerConfig = new BrokerConfig();
-            // 消息的发送者与消息的消费者请求的 netty 网络配置
+            // netty 服务端配置，与生产者通信
             final NettyServerConfig nettyServerConfig = new NettyServerConfig();
-            // 与 namesrv 的网络配置
+            // netty 客服端配置，与 namesrv 的网络配置
             final NettyClientConfig nettyClientConfig = new NettyClientConfig();
 
             nettyClientConfig.setUseTLS(Boolean.parseBoolean(System.getProperty(TLS_ENABLE,
                 String.valueOf(TlsSystemConfig.tlsMode == TlsMode.ENFORCING))));
-            nettyServerConfig.setListenPort(10911);//Netty服务监听端口10911
+            // Netty服务监听端口10911
+            nettyServerConfig.setListenPort(10911);
             // 存储相关的配置信息
             final MessageStoreConfig messageStoreConfig = new MessageStoreConfig();
-            // SLAVE使用的消息常驻内存比例比Master低10%
+            // 如果是 SLAVE 从节点; 使用的消息常驻内存比例比Master低10%
             if (BrokerRole.SLAVE == messageStoreConfig.getBrokerRole()) {
                 int ratio = messageStoreConfig.getAccessMessageInMemoryMaxRatio() - 10;
                 messageStoreConfig.setAccessMessageInMemoryMaxRatio(ratio);
             }
-            // Broker只解析-c参数
+            // 解析命令行参数重 -c 的参数；可以使用 -c -c E:\volume\java\resource-code\rocketmq-all-4.9.1\rocketmq-all-4.9.1-source-release\ROCKETMQ_HOME\conf\broker.conf 指定配置文件
             if (commandLine.hasOption('c')) {
                 String file = commandLine.getOptionValue('c');
                 if (file != null) {
@@ -168,7 +173,7 @@ public class BrokerStartup {
                     System.exit(-3);
                 }
             }
-            // 通过brokerId判断主从
+            // 通过 brokerId 判断主从
             switch (messageStoreConfig.getBrokerRole()) {
                 case ASYNC_MASTER:
                 case SYNC_MASTER:
@@ -195,7 +200,7 @@ public class BrokerStartup {
             configurator.setContext(lc);
             lc.reset();
             configurator.doConfigure(brokerConfig.getRocketmqHome() + "/conf/logback_broker.xml");
-            //处理-p和-m参数
+            // 处理-p和-m参数
             if (commandLine.hasOption('p')) {
                 InternalLogger console = InternalLoggerFactory.getLogger(LoggerName.BROKER_CONSOLE_NAME);
                 MixAll.printObjectProperties(console, brokerConfig);
@@ -219,13 +224,13 @@ public class BrokerStartup {
             MixAll.printObjectProperties(log, messageStoreConfig);
             // 创建核心的 BrokerController
             final BrokerController controller = new BrokerController(
-                brokerConfig,
-                nettyServerConfig,
-                nettyClientConfig,
-                messageStoreConfig);
+                brokerConfig, // broker 配置
+                nettyServerConfig, // netty 服务端配置 - mq客服端通信
+                nettyClientConfig, // netty 客户端配置 - namesrv 通信
+                messageStoreConfig); // broker 存储配置
             // remember all configs to prevent discard
             controller.getConfiguration().registerConfig(properties);
-            // 初始化 BrokerController。注意从中理解 Broker 的组件结构
+            // 初始化
             boolean initResult = controller.initialize();
             if (!initResult) {
                 controller.shutdown();
