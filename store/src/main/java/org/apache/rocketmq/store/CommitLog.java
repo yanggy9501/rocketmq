@@ -555,9 +555,15 @@ public class CommitLog {
         keyBuilder.append(messageExt.getQueueId());
         return keyBuilder.toString();
     }
-    //K2 CommitLog异步写入
+
+    /**
+     * CommitLog异步写入
+     *
+     * @param msg
+     * @return
+     */
     public CompletableFuture<PutMessageResult> asyncPutMessage(final MessageExtBrokerInner msg) {
-        //按照CommitLog的结构依次补充msg对象的相关属性，这整个过程还是挺复杂的。
+        // 按照CommitLog的结构依次补充msg对象的相关属性，这整个过程还是挺复杂的。
         // Set the storage time
         msg.setStoreTimestamp(System.currentTimeMillis());
         // Set the message body BODY CRC (consider the most appropriate setting
@@ -624,7 +630,7 @@ public class CommitLog {
             // Here settings are stored timestamp, in order to ensure an orderly
             // global
             msg.setStoreTimestamp(beginLockTimestamp);
-            //找到最后一个CommitLog文件。最后一个就是当前写的文件
+            // 找到最后一个CommitLog文件。最后一个就是当前写的文件
             if (null == mappedFile || mappedFile.isFull()) {
                 mappedFile = this.mappedFileQueue.getLastMappedFile(0); // Mark: NewFile may be cause noise
             }
@@ -633,12 +639,12 @@ public class CommitLog {
                 beginTimeInLock = 0;
                 return CompletableFuture.completedFuture(new PutMessageResult(PutMessageStatus.CREATE_MAPEDFILE_FAILED, null));
             }
-            //RocketMQ以零拷贝的方式实现消息顺序写。 ByteBuffer.allocateDirect(fileSize)
+            // RocketMQ以零拷贝的方式实现消息顺序写。 ByteBuffer.allocateDirect(fileSize)
             result = mappedFile.appendMessage(msg, this.appendMessageCallback, putMessageContext);
             switch (result.getStatus()) {
                 case PUT_OK:
                     break;
-                case END_OF_FILE: //当前写的CommitLog文件存不下，就新建一个文件
+                case END_OF_FILE: // 当前写的CommitLog文件存不下，就新建一个文件
                     unlockMappedFile = mappedFile;
                     // Create a new file, re-write the message
                     mappedFile = this.mappedFileQueue.getLastMappedFile(0);
@@ -681,9 +687,9 @@ public class CommitLog {
         // Statistics
         storeStatsService.getSinglePutMessageTopicTimesTotal(msg.getTopic()).incrementAndGet();
         storeStatsService.getSinglePutMessageTopicSizeTotal(topic).addAndGet(result.getWroteBytes());
-        //分发刷盘请求
+        // 分发刷盘请求
         CompletableFuture<PutMessageStatus> flushResultFuture = submitFlushRequest(result, msg);
-        //分发主从同步请求
+        // 分发主从同步请求
         CompletableFuture<PutMessageStatus> replicaResultFuture = submitReplicaRequest(result, msg);
         return flushResultFuture.thenCombine(replicaResultFuture, (flushStatus, replicaStatus) -> {
             if (flushStatus != PutMessageStatus.PUT_OK) {

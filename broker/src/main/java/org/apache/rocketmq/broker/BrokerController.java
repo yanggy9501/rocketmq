@@ -237,7 +237,8 @@ public class BrokerController {
                 log.error("Failed to initialize", e);
             }
         }
-        // 将磁盘中 store/commitlog/ 和 store/consumerQueue/ 目录文件加载到内存中
+        // 将磁盘中 store/commitlog/ 和 store/consumerQueue/ 目录中消息文件、消息索引文件加载到内存中
+        // 应用零拷贝 mmap 技术
         result = result && this.messageStore.load();
         // Broker 的 Netty 组件。注意，Broker 即需要是 Netty 的服务端，又需要是 Netty的客户端。
         if (result) {
@@ -840,7 +841,7 @@ public class BrokerController {
         if (this.messageStore != null) {
             this.messageStore.start();
         }
-        //K2 Broker中启动了两个Netty服务。
+        // Broker中启动了两个Netty服务。
         if (this.remotingServer != null) {
             this.remotingServer.start();
         }
@@ -852,11 +853,11 @@ public class BrokerController {
         if (this.fileWatchService != null) {
             this.fileWatchService.start();
         }
-        //K2 Broker的brokerOuterAPI可以理解为一个Netty客户端，往外发请求的组件。例如发送心跳
+        // Broker的brokerOuterAPI可以理解为一个Netty客户端，往外发请求的组件。例如发送心跳
         if (this.brokerOuterAPI != null) {
             this.brokerOuterAPI.start();
         }
-        //长轮询请求暂存服务
+        // 长轮询请求暂存服务
         if (this.pullRequestHoldService != null) {
             this.pullRequestHoldService.start();
         }
@@ -874,7 +875,7 @@ public class BrokerController {
             handleSlaveSynchronize(messageStoreConfig.getBrokerRole());
             this.registerBrokerAll(true, false, true);
         }
-        //K2 Broker核心的心跳注册任务，需要深入解读下。
+        // Broker核心的心跳注册任务，需要深入解读下。
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
