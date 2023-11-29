@@ -63,7 +63,7 @@ public class NamesrvStartup {
     }
 
     public static NamesrvController main0(String[] args) {
-        //1. NamesrvController 为 NameServer 的核心组件，类似于Web应用中的 Controller，负责接收处理网络请求。
+        // 1. NamesrvController 为 NameServer 的核心组件，类似于Web应用中的 Controller，负责接收处理网络请求。
         try {
             // 创建 NameSrvController，NameSrv 的配置存放在 user.home\namesrv\ 目录下
             NamesrvController controller = createNamesrvController(args);
@@ -97,7 +97,7 @@ public class NamesrvStartup {
         final NamesrvConfig namesrvConfig = new NamesrvConfig();
         // Netty 网络通信配置 NettyServerConfig
         final NettyServerConfig nettyServerConfig = new NettyServerConfig();
-        // Netty 默认端口 9876
+        // Namrsrv 的 Netty 默认端口 9876
         nettyServerConfig.setListenPort(9876);
         // -c 和 -p 参数解析，-c config 通过启动命令指定配置以定制化的额外配置 NamesrvConfig、NettyServerConfig
         if (commandLine.hasOption('c')) {
@@ -168,7 +168,7 @@ public class NamesrvStartup {
                 return null;
             }
         }));
-        // 启动服务，启动 netty
+        // 启动服务，启动 namrsrv 的 netty server
         controller.start();
 
         return controller;

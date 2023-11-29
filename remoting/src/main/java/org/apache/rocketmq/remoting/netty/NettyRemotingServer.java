@@ -56,8 +56,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * NRS 服务
+ */
 public class NettyRemotingServer extends NettyRemotingAbstract implements RemotingServer {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(RemotingHelper.ROCKETMQ_REMOTING);
+
+    /**
+     * netty 的 ServerBootstrap
+     */
     private final ServerBootstrap serverBootstrap;
     private final EventLoopGroup eventLoopGroupSelector;
     private final EventLoopGroup eventLoopGroupBoss;
@@ -91,6 +98,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
         // 信号量：限制同时并发调用
         super(nettyServerConfig.getServerOnewaySemaphoreValue(), nettyServerConfig.getServerAsyncSemaphoreValue());
         // netty ServerBootstrap
+        // 创建 netty server 服务
         this.serverBootstrap = new ServerBootstrap();
         this.nettyServerConfig = nettyServerConfig;
         this.channelEventListener = channelEventListener;
@@ -201,21 +209,20 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
                 .childOption(ChannelOption.TCP_NODELAY, true)
                 .childOption(ChannelOption.SO_SNDBUF, nettyServerConfig.getServerSocketSndBufSize())
                 .childOption(ChannelOption.SO_RCVBUF, nettyServerConfig.getServerSocketRcvBufSize())
-                .localAddress(new InetSocketAddress(this.nettyServerConfig.getListenPort()))
+                .localAddress(new InetSocketAddress(this.nettyServerConfig.getListenPort()))// netty 监听端口
                 .childHandler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     public void initChannel(SocketChannel ch) throws Exception {
-                        // Netty的核心服务流程，encoder和decoder，二进制传输协议。
-                        // RocketMQ中的二进制传输协议比较复杂，是否能按照JSON自定义二进制协议？
+                        // Netty的核心服务流程，encoder和decoder 编解码器，二进制传输协议
                         // serverHandler 负责最关键的网络请求处理。
                         ch.pipeline()
                             .addLast(defaultEventExecutorGroup, HANDSHAKE_HANDLER_NAME, handshakeHandler)
                             .addLast(defaultEventExecutorGroup,
-                                encoder,
-                                new NettyDecoder(),
-                                new IdleStateHandler(0, 0, nettyServerConfig.getServerChannelMaxIdleTimeSeconds()),
-                                connectionManageHandler,
-                                serverHandler
+                                encoder,// 编码器
+                                new NettyDecoder(),// 解码器
+                                new IdleStateHandler(0, 0, nettyServerConfig.getServerChannelMaxIdleTimeSeconds()),// 类似心跳的 netty 自带的 handler
+                                connectionManageHandler,// 连接管理器处理器（心跳健康）
+                                serverHandler// 核心的请求处理器
                             );
                     }
                 });

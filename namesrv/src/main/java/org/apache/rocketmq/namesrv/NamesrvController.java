@@ -40,7 +40,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Namesrv 控制器
+ * Namesrv 控制器（netty）
  */
 public class NamesrvController {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.NAMESRV_LOGGER_NAME);
@@ -72,7 +72,7 @@ public class NamesrvController {
     private final RouteInfoManager routeInfoManager;
 
     /**
-     * 远程网络通信服务器，跟 broker，producer，consumer 来进行通信
+     * 远程网络通信服务器（netty），跟 broker，producer，consumer 来进行通信
      */
     private RemotingServer remotingServer;
 
@@ -126,6 +126,7 @@ public class NamesrvController {
 
             @Override
             public void run() {
+                // 每间隔10S扫描一次活跃Broker
                 NamesrvController.this.routeInfoManager.scanNotActiveBroker();
             }
         }, 5, 10, TimeUnit.SECONDS);
