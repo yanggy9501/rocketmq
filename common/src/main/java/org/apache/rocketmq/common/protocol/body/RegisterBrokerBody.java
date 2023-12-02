@@ -18,6 +18,14 @@
 package org.apache.rocketmq.common.protocol.body;
 
 import com.alibaba.fastjson.JSON;
+import org.apache.rocketmq.common.DataVersion;
+import org.apache.rocketmq.common.MixAll;
+import org.apache.rocketmq.common.TopicConfig;
+import org.apache.rocketmq.common.constant.LoggerName;
+import org.apache.rocketmq.logging.InternalLogger;
+import org.apache.rocketmq.logging.InternalLoggerFactory;
+import org.apache.rocketmq.remoting.protocol.RemotingSerializable;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -30,17 +38,14 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
-import org.apache.rocketmq.common.DataVersion;
-import org.apache.rocketmq.common.MixAll;
-import org.apache.rocketmq.common.TopicConfig;
-import org.apache.rocketmq.common.constant.LoggerName;
-import org.apache.rocketmq.logging.InternalLogger;
-import org.apache.rocketmq.logging.InternalLoggerFactory;
-import org.apache.rocketmq.remoting.protocol.RemotingSerializable;
 
+/**xxx: broker 注册信息 （request body） */
 public class RegisterBrokerBody extends RemotingSerializable {
 
     private static final InternalLogger LOGGER = InternalLoggerFactory.getLogger(LoggerName.COMMON_LOGGER_NAME);
+    /**
+     * broker 上的 topic 配置信息
+     */
     private TopicConfigSerializeWrapper topicConfigSerializeWrapper = new TopicConfigSerializeWrapper();
     private List<String> filterServerList = new ArrayList<String>();
 

@@ -62,7 +62,7 @@ public class KVConfigManager {
     public void load() {
         String content = null;
         try {
-            // kv config path文件里存储 json 格式的 kv 值
+            // kv config path文件里存储 json 格式的 kv 值，默认：\用户\kvConfig.json
             content = MixAll.file2String(this.namesrvController.getNamesrvConfig().getKvConfigPath());
         } catch (IOException e) {
             log.warn("Load KV config table exception", e);

@@ -85,6 +85,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
 
     // sharable handlers
     private HandshakeHandler handshakeHandler;
+    // 编码器
     private NettyEncoder encoder;
     private NettyConnectManageHandler connectionManageHandler;
     private NettyServerHandler serverHandler;
@@ -419,7 +420,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
         }
     }
 
-    /*xxx：ChannelInboundHandler*/
+    /*xxx：ChannelInboundHandler：namesrv 核心请求处理处理器 netty handler */
     @ChannelHandler.Sharable
     class NettyServerHandler extends SimpleChannelInboundHandler<RemotingCommand> {
 

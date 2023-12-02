@@ -119,7 +119,7 @@ public class NamesrvController {
         // 初始化 Netty 服务器的工作线程池
         this.remotingExecutor =
             Executors.newFixedThreadPool(nettyServerConfig.getServerWorkerThreads(), new ThreadFactoryImpl("RemotingExecutorThread_"));
-        // 注册 NameServer 的 Processor 注册到 RemotingServer 中（如：处理心跳的）
+        // 注册 NameServer 的 Processor 到 RemotingServer 中（如：处理心跳的）
         this.registerProcessor();
         // 路由剔除：定时任务：每间隔10S扫描一次Broker，移除不活跃的Broker
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {

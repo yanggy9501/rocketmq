@@ -254,9 +254,9 @@ public abstract class NettyRemotingAbstract {
             }
 
             try {
-                // 封装任务
+                // 封装任务（处理的任务，channel，请求参数 cmd）
                 final RequestTask requestTask = new RequestTask(run, ctx.channel(), cmd);
-                // 添加任务给线程池处理
+                // 提交任务给线程池处理
                 pair.getObject2().submit(requestTask);
             } catch (RejectedExecutionException e) {
                 if ((System.currentTimeMillis() % 10000) == 0) {

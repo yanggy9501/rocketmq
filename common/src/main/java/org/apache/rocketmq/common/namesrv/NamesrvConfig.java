@@ -35,7 +35,7 @@ public class NamesrvConfig {
 
     /** 配置 */
     /**
-     * rocketmqHome
+     * ROCKETMQ_HOME 环境变量（工作目录）
      */
     private String rocketmqHome = System.getProperty(MixAll.ROCKETMQ_HOME_PROPERTY, System.getenv(MixAll.ROCKETMQ_HOME_ENV));
 
@@ -45,7 +45,7 @@ public class NamesrvConfig {
     private String kvConfigPath = System.getProperty("user.home") + File.separator + "namesrv" + File.separator + "kvConfig.json";
 
     /**
-     * 通用配置存储
+     * 通用配置存储文件路径
      */
     private String configStorePath = System.getProperty("user.home") + File.separator + "namesrv" + File.separator + "namesrv.properties";
     private String productEnvName = "center";

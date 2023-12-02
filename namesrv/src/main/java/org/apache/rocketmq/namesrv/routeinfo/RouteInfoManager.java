@@ -51,7 +51,7 @@ public class RouteInfoManager {
     private final static long BROKER_CHANNEL_EXPIRED_TIME = 1000 * 60 * 2;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-    /** 几个关键的Table */
+    /* ************************ 几个关键的Table *************************** */
     /**
      * topic:queue 的映射信息
      * topic 是逻辑的概念，一个 topic 有多个分区即 queue，queue是物理概念在实践 broker 机器上
@@ -153,12 +153,13 @@ public class RouteInfoManager {
             try {
                 // 加锁，同一时间只能一个人写
                 this.lock.writeLock().lockInterruptibly();
-                // 拿到一个 cluster 集群对应的 broker 组，把这broker 组加入到 cluster 里去
+                // 获取 clusterName 对应的 cluster 集群对应的 broker 的set集合，把这broker 组加入到 cluster 里去
                 Set<String> brokerNames = this.clusterAddrTable.get(clusterName);
                 if (null == brokerNames) {
                     brokerNames = new HashSet<String>();
                     this.clusterAddrTable.put(clusterName, brokerNames);
                 }
+                // 添加 broker 到对应集群的 broker 集合中
                 brokerNames.add(brokerName);
 
                 boolean registerFirst = false;
@@ -169,6 +170,7 @@ public class RouteInfoManager {
                     brokerData = new BrokerData(clusterName, brokerName, new HashMap<Long, String>());
                     this.brokerAddrTable.put(brokerName, brokerData);
                 }
+                // brokerId:brokerAddr
                 Map<Long, String> brokerAddrsMap = brokerData.getBrokerAddrs();
                 //Switch slave to master: first remove <1, IP:PORT> in namesrv, then add <0, IP:PORT>
                 //The same IP:PORT must only have one record in brokerAddrTable
@@ -820,7 +822,7 @@ public class RouteInfoManager {
  */
 class BrokerLiveInfo {
     /**
-     * broker 是可以主动给 namesrv 上报心跳，会更新该值
+     * broker 是可以主动给 namesrv 上报心跳，会更新该值(最后更新时间)
      */
     private long lastUpdateTimestamp;
 
