@@ -77,7 +77,7 @@ public class RemotingCommand {
     }
 
     /**
-     * code编号：请求编号
+     * code编号：请求编号 注册|心跳|...
      */
     private int code;
 

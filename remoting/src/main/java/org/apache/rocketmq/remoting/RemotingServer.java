@@ -27,7 +27,7 @@ import org.apache.rocketmq.remoting.protocol.RemotingCommand;
 import java.util.concurrent.ExecutorService;
 
 /**
- * 远程网络通信服务器
+ * 远程网络通信服务器，注册请求处理器，同步处理，异步处理等等
  */
 public interface RemotingServer extends RemotingService {
     /**
@@ -43,7 +43,7 @@ public interface RemotingServer extends RemotingService {
     void registerDefaultProcessor(final NettyRequestProcessor processor, final ExecutorService executor);
 
     /**
-     * 本地机器的监听
+     * 本地机器的监听的端口
      *
      * @return
      */
@@ -53,14 +53,37 @@ public interface RemotingServer extends RemotingService {
      * 查询某个请求处理组件和线程池组件
      *
      * @param requestCode
-     * @return
+     * @return Pair<NettyRequestProcessor 请求处理器, ExecutorService 请求处理器异步处理的线程池>
      */
     Pair<NettyRequestProcessor, ExecutorService> getProcessorPair(final int requestCode);
 
+    /**
+     * 同步处理
+     *
+     * @param channel
+     * @param request
+     * @param timeoutMillis
+     * @return
+     * @throws InterruptedException
+     * @throws RemotingSendRequestException
+     * @throws RemotingTimeoutException
+     */
     RemotingCommand invokeSync(final Channel channel, final RemotingCommand request,
         final long timeoutMillis) throws InterruptedException, RemotingSendRequestException,
         RemotingTimeoutException;
 
+    /**
+     * 异步处理
+     *
+     * @param channel
+     * @param request
+     * @param timeoutMillis
+     * @param invokeCallback
+     * @throws InterruptedException
+     * @throws RemotingTooMuchRequestException
+     * @throws RemotingTimeoutException
+     * @throws RemotingSendRequestException
+     */
     void invokeAsync(final Channel channel, final RemotingCommand request, final long timeoutMillis,
         final InvokeCallback invokeCallback) throws InterruptedException,
         RemotingTooMuchRequestException, RemotingTimeoutException, RemotingSendRequestException;
