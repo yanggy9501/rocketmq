@@ -29,14 +29,15 @@ public class QueueData implements Comparable<QueueData> {
      */
     private String brokerName;
 
-    /** write queue 和 read queue；区分读写queue作用是帮助我们对topic的queue进行扩容和缩容*/
+    /** write queue 和 read queue；区分读写 queue 作用是帮助我们对 topic 的 queue 进行扩容和缩容*/
     private int readQueueNums;
     private int writeQueueNums;
 
+    /** 读写权限 */
     private int perm;
 
     /**
-     * topic 标志位
+     * topic 同步标志位
      */
     private int topicSysFlag;
 

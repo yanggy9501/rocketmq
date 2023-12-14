@@ -53,24 +53,25 @@ public class RouteInfoManager {
 
     /* ************************ 几个关键的Table *************************** */
     /**
-     * topic:queue 的映射信息
-     * topic 是逻辑的概念，一个 topic 有多个分区即 queue，queue是物理概念在实践 broker 机器上
-     * broker 上
+     * topic queue 消息队列的路由信息，消息发送时过呢感觉路由表进行负载均衡
+     * topic 是逻辑的概念，一个 topic 有多个分区即 queue，queue是物理概念在实践 broker 机器上broker 上
      */
     private final HashMap<String/* topic */, List<QueueData>> topicQueueTable;
 
     /**
+     * broker 基础信息，包括 brokerName, 集群名称，主备 broker 地址
      * 一个 broker name 对应一个 broker data，broker 与 broker 组的映射
      */
     private final HashMap<String/* brokerName */, BrokerData> brokerAddrTable;
 
     /**
+     * broker 集群信息，存储集群中的所有 broker 名称
      * 一个 namesrv 可以管理多个 rocketmq 集群的
      */
     private final HashMap<String/* clusterName */, Set<String/* brokerName */>> clusterAddrTable;
 
     /**
-     * broker 存活的数据结构
+     * broker 存活的数据结构，namesrv 每次收到心跳信息时会替换该信息
      */
     private final HashMap<String/* brokerAddr */, BrokerLiveInfo> brokerLiveTable;
 
@@ -110,6 +111,11 @@ public class RouteInfoManager {
         }
     }
 
+    /**
+     * 获取路由表信息
+     *
+     * @return 路由表信息
+     */
     public byte[] getAllTopicList() {
         TopicList topicList = new TopicList();
         try {

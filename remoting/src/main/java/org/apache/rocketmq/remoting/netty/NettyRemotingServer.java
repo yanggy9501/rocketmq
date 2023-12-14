@@ -420,7 +420,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
         }
     }
 
-    /*xxx：ChannelInboundHandler：namesrv 核心请求处理处理器 netty handler */
+    /*xxx：ChannelInboundHandler：namesrv、broker 核心请求处理处理器 netty handler */
     @ChannelHandler.Sharable
     class NettyServerHandler extends SimpleChannelInboundHandler<RemotingCommand> {
 

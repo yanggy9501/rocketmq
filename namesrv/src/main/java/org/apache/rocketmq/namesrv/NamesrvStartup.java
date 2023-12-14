@@ -49,7 +49,7 @@ import java.util.concurrent.Callable;
  * 2. 动态剔除功能，每隔 10 s NameServer 会自动扫描所有的 broker, 如果有 broker失效，那么会从地址列表里将其剔除掉。
  *
  * PS: 需要配置环境变量 ROCKETMQ_HOME=ROCKETMQ的主目录（随意:配置环境变量(值为RocketMQ的安装路径)）
- * 在启动参数配置环境变化，或者在系统中配置环境变量，如
+ * 在启动参数配置环境变化，或者在系统中配置环境变量(目的是找ROCKETMQ_HOME/conf目录中的配置)，如
  * ROCKETMQ_HOME=\rocketmq-all-4.9.1\rocketmq-all-4.9.1-source-release
  */
 public class NamesrvStartup {

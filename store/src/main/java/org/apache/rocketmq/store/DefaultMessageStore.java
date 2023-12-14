@@ -48,34 +48,34 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
-//K1 Broker进行消息存储的核心功能组件
+// Broker进行消息存储的核心功能组件
 public class DefaultMessageStore implements MessageStore {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.STORE_LOGGER_NAME);
     //消息配置属性
     private final MessageStoreConfig messageStoreConfig;
-    // CommitLog
+    // CommitLog 存储实现
     private final CommitLog commitLog;
-    //消息队列存储缓存
+    // 消息队列存储缓存
     private final ConcurrentMap<String/* topic */, ConcurrentMap<Integer/* queueId */, ConsumeQueue>> consumeQueueTable;
-    //消息队列文件刷盘线程
+    // 消息队列文件刷盘线程
     private final FlushConsumeQueueService flushConsumeQueueService;
-    //清楚CommitLog文件服务
+    // 清除CommitLog文件服务
     private final CleanCommitLogService cleanCommitLogService;
-    //清楚ConsumeQueue文件服务
+    // 清除ConsumeQueue文件服务
     private final CleanConsumeQueueService cleanConsumeQueueService;
-    //索引实现类
+    // 索引实现类
     private final IndexService indexService;
-    //MappedFile分配服务
+    // MappedFile分配服务
     private final AllocateMappedFileService allocateMappedFileService;
-    //commitLog消息分发，根据CommitLog文件来构建ConsumeQueue和indexFile文件。
+    // commitLog消息分发，根据CommitLog文件来构建ConsumeQueue和indexFile文件。
     private final ReputMessageService reputMessageService;
-    //存储HA机制
+    // 存储HA机制
     private final HAService haService;
 
     private final ScheduleMessageService scheduleMessageService;
-    //消息存储服务
+    // 消息存储服务
     private final StoreStatsService storeStatsService;
-    //消息堆外内存缓存
+    // 消息堆外内存缓存
     private final TransientStorePool transientStorePool;
 
     private final RunningFlags runningFlags = new RunningFlags();
@@ -406,6 +406,12 @@ public class DefaultMessageStore implements MessageStore {
         return PutMessageStatus.PUT_OK;
     }
 
+    /**
+     * 异步存储消息
+     *
+     * @param msg MessageInstance to store
+     * @return
+     */
     @Override
     public CompletableFuture<PutMessageResult> asyncPutMessage(MessageExtBrokerInner msg) {
         PutMessageStatus checkStoreStatus = this.checkStoreStatus();

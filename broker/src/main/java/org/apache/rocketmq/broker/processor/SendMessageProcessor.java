@@ -80,6 +80,14 @@ public class SendMessageProcessor extends AbstractSendMessageProcessor implement
         return response;
     }
 
+    /**
+     * 异步处理消息
+     *
+     * @param ctx
+     * @param request
+     * @param responseCallback
+     * @throws Exception
+     */
     @Override
     public void asyncProcessRequest(ChannelHandlerContext ctx, RemotingCommand request, RemotingResponseCallback responseCallback) throws Exception {
         asyncProcessRequest(ctx, request).thenAcceptAsync(responseCallback::callback, this.brokerController.getSendMessageExecutor());
@@ -259,7 +267,7 @@ public class SendMessageProcessor extends AbstractSendMessageProcessor implement
     private CompletableFuture<RemotingCommand> asyncSendMessage(ChannelHandlerContext ctx, RemotingCommand request,
                                                                 SendMessageContext mqtraceContext,
                                                                 SendMessageRequestHeader requestHeader) {
-        // 在发送前的处理，标识 rpc 的 SeqNumber, 检查队列的读写前需，自动创建 topic 等等
+        // 在发送前的处理，标识 rpc 的 SeqNumber, 检查队列的读写前需自动创建 topic 等等
         final RemotingCommand response = preSend(ctx, request, requestHeader);
         final SendMessageResponseHeader responseHeader = (SendMessageResponseHeader)response.readCustomHeader();
 

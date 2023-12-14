@@ -557,7 +557,7 @@ public class CommitLog {
     }
 
     /**
-     * CommitLog异步写入
+     * CommitLog 异步写入
      *
      * @param msg
      * @return
@@ -580,7 +580,7 @@ public class CommitLog {
         final int tranType = MessageSysFlag.getTransactionValue(msg.getSysFlag());
         if (tranType == MessageSysFlag.TRANSACTION_NOT_TYPE
                 || tranType == MessageSysFlag.TRANSACTION_COMMIT_TYPE) {
-            //K1 延迟消息的实现方式，就是偷偷修改一下msg的topic和queueID，改为系统默认创建的延迟队列。
+            // 延迟消息的实现方式，就是偷偷修改一下msg的topic和queueID，改为系统默认创建的延迟队列。
             // Delay Delivery
             if (msg.getDelayTimeLevel() > 0) {
                 if (msg.getDelayTimeLevel() > this.defaultMessageStore.getScheduleMessageService().getMaxDelayLevel()) {
